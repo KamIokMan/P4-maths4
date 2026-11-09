@@ -1,0 +1,1610 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>數學搶寶箱 - 小四課堂競賽版</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Noto Sans TC & Fredoka -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+  <!-- Canvas Confetti for Victory Celebration -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      background: linear-gradient(180deg, #7dd3fc 0%, #bae6fd 26%, #bbf7d0 65%, #4ade80 100%);
+      min-height: 100vh;
+    }
+
+    .num-font {
+      font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+    }
+
+    /* Pastoral Cloud & Grass Background Decorations */
+    .sky-bg {
+      background-image: 
+        radial-gradient(circle at 12% 15%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.85) 45px, transparent 46px),
+        radial-gradient(circle at 16% 13%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.9) 60px, transparent 61px),
+        radial-gradient(circle at 20% 15%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.85) 40px, transparent 41px),
+        radial-gradient(circle at 82% 12%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.85) 50px, transparent 51px),
+        radial-gradient(circle at 86% 10%, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.9) 65px, transparent 66px),
+        radial-gradient(circle at 90% 13%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.85) 45px, transparent 46px);
+    }
+
+    /* Wooden fence top pattern for race track */
+    .wooden-fence {
+      background-image: repeating-linear-gradient(
+        90deg,
+        #b45309 0px,
+        #b45309 18px,
+        #d97706 18px,
+        #d97706 24px,
+        transparent 24px,
+        transparent 38px
+      );
+    }
+
+    /* Checkered Finish Line */
+    .checkered-line {
+      background-image: conic-gradient(
+        #1e293b 90deg,
+        #ffffff 90deg 180deg,
+        #1e293b 180deg 270deg,
+        #ffffff 270deg
+      );
+      background-size: 16px 16px;
+    }
+
+    /* Animated Goose & Racers */
+    @keyframes gooseBounce {
+      0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+      25% { transform: translateY(-6px) rotate(-4deg) scale(1.03); }
+      75% { transform: translateY(-3px) rotate(4deg) scale(1.02); }
+    }
+    .goose-anim {
+      animation: gooseBounce 1.8s infinite ease-in-out;
+    }
+
+    @keyframes gooseExcited {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-14px) scale(1.12) rotate(-8deg); }
+    }
+    .goose-excited {
+      animation: gooseExcited 0.45s infinite ease-in-out;
+    }
+
+    @keyframes avatarRun {
+      0%, 100% { transform: translateY(0px) rotate(-3deg); }
+      50% { transform: translateY(-5px) rotate(4deg); }
+    }
+    .racer-bob {
+      animation: avatarRun 0.65s infinite ease-in-out;
+    }
+
+    @keyframes pulseUrgent {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.12); }
+    }
+    .timer-urgent {
+      animation: pulseUrgent 0.6s infinite ease-in-out;
+    }
+
+    /* Keypad Button Press Effect */
+    .key-btn {
+      transition: transform 0.06s ease, background-color 0.1s ease, box-shadow 0.06s ease;
+      box-shadow: 0 3px 0 rgba(15, 23, 42, 0.09);
+    }
+    .key-btn:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.4);
+      border-radius: 8px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(16, 185, 129, 0.5);
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body class="sky-bg flex flex-col min-h-screen text-slate-800">
+
+  <!-- ==================== SCREEN 1: SETUP SCREEN (創建課堂賽) ==================== -->
+  <div id="setupScreen" class="flex-1 flex flex-col max-w-[1600px] w-full mx-auto px-3 sm:px-5 py-2.5 gap-3">
+    
+    <!-- Top Header Bar -->
+    <header class="bg-white/95 backdrop-blur-md rounded-2xl px-5 py-2.5 shadow-md border border-white flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div>
+          <div class="text-[11px] font-bold tracking-widest text-slate-400 uppercase">CLASSROOM MATCH</div>
+          <h1 class="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
+            <span>創建課堂賽</span>
+            <span class="text-xs sm:text-sm font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">小四課堂競賽版</span>
+          </h1>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2.5">
+        <button id="soundToggleSetup" onclick="toggleSound()" class="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-sm flex items-center gap-1.5 shadow-sm transition">
+          <span id="soundIconSetup">🔊</span>
+          <span id="soundTextSetup">音效開啟</span>
+        </button>
+        <button onclick="toggleFullScreen()" class="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-sm flex items-center gap-1.5 shadow-sm transition">
+          <span>⛶</span>
+          <span>全屏</span>
+        </button>
+        <button onclick="resetToHomeDefaults()" class="px-4 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold text-sm shadow-sm transition">
+          返回首頁
+        </button>
+      </div>
+    </header>
+
+    <!-- Main 2-Column Content -->
+    <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+      
+      <!-- Left Column: Competition Rules & Parameters (5 cols) -->
+      <section class="lg:col-span-5 bg-white/95 backdrop-blur-md rounded-3xl p-4 sm:p-5 shadow-lg border-2 border-white flex flex-col justify-between gap-3.5">
+        <div class="space-y-3.5">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-black text-slate-800 flex items-center gap-2">
+              <span>比賽規則</span>
+            </h2>
+            <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">支援觸控大屏多人同時作答</span>
+          </div>
+
+          <!-- Warm beige rules banner exactly like screenshot -->
+          <div class="bg-[#fff7ed] border border-[#fed7aa] rounded-2xl p-3.5 text-xs sm:text-sm text-[#9a3412] leading-relaxed font-medium">
+            每人使用自己的數字鍵盤輸入答案，再按確定提交。每題可提交一次；<span class="font-bold underline">答對前進1步</span>，本題<span class="font-bold text-orange-600">首個答對額外前進1步</span>。蓄滿3格再加2步，每連續答對3題再加1步，獎勵可疊加。答錯或超時本題不前進。
+          </div>
+
+          <!-- 玩家人數 -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1.5">玩家人數</label>
+            <div class="grid grid-cols-3 gap-2.5" id="playerCountGroup">
+              <button onclick="setPlayerCount(2)" data-val="2" class="cfg-btn py-2.5 rounded-xl font-bold text-sm border transition">2人</button>
+              <button onclick="setPlayerCount(3)" data-val="3" class="cfg-btn py-2.5 rounded-xl font-bold text-sm border transition">3人</button>
+              <button onclick="setPlayerCount(4)" data-val="4" class="cfg-btn py-2.5 rounded-xl font-bold text-sm border transition">4人</button>
+            </div>
+          </div>
+
+          <!-- 計算難度 / 題目模式 (Tailored for Primary 4) -->
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="text-xs font-bold text-slate-500">計算難度 / 題目模式</label>
+              <span id="modePreviewText" class="text-[11px] font-bold text-emerald-600">範例：24 × 3 = 72</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2" id="topicModeGroup">
+              <button onclick="setTopicMode('table_mul_div')" data-val="table_mul_div" class="cfg-btn py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm border transition">表內乘除</button>
+              <button onclick="setTopicMode('p4_mul_2x1')" data-val="p4_mul_2x1" class="cfg-btn py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm border transition">兩位數乘以一位數</button>
+              <button onclick="setTopicMode('p4_div')" data-val="p4_div" class="cfg-btn py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm border transition">除數是兩位數的除法</button>
+              <button onclick="setTopicMode('p4_mixed')" data-val="p4_mixed" class="cfg-btn py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm border transition">四則混合運算</button>
+              <button onclick="setTopicMode('custom')" data-val="custom" class="cfg-btn py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm border transition col-span-2">自定義題目</button>
+            </div>
+          </div>
+
+          <!-- 自定義題庫 Box (Matches Screenshot 2) -->
+          <div id="customBankBox" class="bg-slate-50/90 border border-slate-200 rounded-2xl p-3.5 transition-all">
+            <div class="flex items-center justify-between mb-1">
+              <div class="flex items-center gap-1.5 font-extrabold text-sm text-slate-700">
+                <span>📝 自定義題庫</span>
+              </div>
+              <span id="customCountBadge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">已導入 10 題</span>
+            </div>
+            <p class="text-xs text-slate-500 mb-2.5">
+              下載模板，按“題目,答案”兩列填寫。虛擬數字鍵盤支持 0~99999999 的整數答案，導入後自動保存。
+            </p>
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="downloadCsvTemplate()" class="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold text-xs flex items-center gap-1 shadow-sm transition">
+                <span>⬇</span> 下載CSV模板
+              </button>
+              <label class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs flex items-center gap-1 shadow-sm cursor-pointer transition">
+                <span>⬆</span> 導入CSV題庫
+                <input type="file" id="csvFileInput" accept=".csv,.txt" class="hidden" onchange="handleCsvUpload(event)" />
+              </label>
+              <button onclick="openCustomModal()" class="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-bold text-xs flex items-center gap-1 transition">
+                <span>✏️</span> 新增/編輯題庫
+              </button>
+              <button onclick="clearCustomBank()" class="px-3 py-1.5 rounded-xl bg-white hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-slate-200 font-bold text-xs transition">
+                清空題庫
+              </button>
+            </div>
+          </div>
+
+          <!-- 比賽距離 -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1.5">比賽距離</label>
+            <div class="grid grid-cols-3 gap-2.5" id="raceDistanceGroup">
+              <button onclick="setRaceDistance(8)" data-val="8" class="cfg-btn py-2 rounded-xl font-bold text-sm border transition">短賽 (8步)</button>
+              <button onclick="setRaceDistance(12)" data-val="12" class="cfg-btn py-2 rounded-xl font-bold text-sm border transition">標準 (12步)</button>
+              <button onclick="setRaceDistance(18)" data-val="18" class="cfg-btn py-2 rounded-xl font-bold text-sm border transition">長賽 (18步)</button>
+            </div>
+          </div>
+
+          <!-- 每題時間 -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1.5">每題時間</label>
+            <div class="grid grid-cols-3 gap-2.5" id="questionTimeGroup">
+              <button onclick="setQuestionTime(8)" data-val="8" class="cfg-btn py-2 rounded-xl font-bold text-sm border transition">8秒</button>
+              <button onclick="setQuestionTime(12)" data-val="12" class="cfg-btn py-2 rounded-xl font-bold text-sm border transition">12秒</button>
+              <button onclick="setQuestionTime(15)" data-val="15" class="cfg-btn py-2 rounded-xl font-bold text-sm border transition">15秒</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Player Setup (7 cols) -->
+      <section class="lg:col-span-7 bg-white/95 backdrop-blur-md rounded-3xl p-4 sm:p-5 shadow-lg border-2 border-white flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-3.5">
+            <h2 class="text-lg font-black text-slate-800 flex items-center gap-2">
+              <span>🐾 玩家設置</span>
+              <span class="text-xs font-normal text-slate-400">（可點擊修改學生姓名與代表動物）</span>
+            </h2>
+            <button onclick="randomizePlayerAvatars()" class="text-xs font-bold text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition">
+              🎲 隨機分配動物
+            </button>
+          </div>
+
+          <!-- Player Setup Cards Grid -->
+          <div id="playerSetupGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Dynamically rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Bottom Action Area with Treasure Chest Illustration & Start Button -->
+        <div class="mt-6 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3 bg-gradient-to-r from-amber-50 to-emerald-50 px-4 py-2.5 rounded-2xl border border-amber-200/80">
+            <span class="text-4xl goose-anim inline-block">🎁</span>
+            <div class="text-xs text-slate-600 leading-snug">
+              <div class="font-black text-slate-800 text-sm">終點黃金大寶箱已準備就緒！</div>
+              <div>目前模式：<span id="summaryModeLabel" class="font-bold text-emerald-700">兩位數乘以一位數</span> ｜ 賽程：<span id="summaryDistLabel" class="font-bold text-emerald-700">12步</span></div>
+            </div>
+          </div>
+
+          <button onclick="startMatch()" class="w-full sm:w-auto px-10 py-4 rounded-2xl bg-gradient-to-b from-emerald-400 to-emerald-600 hover:from-emerald-500 hover:to-emerald-700 text-white font-black text-xl shadow-[0_6px_0_#047857] active:translate-y-1 active:shadow-[0_2px_0_#047857] transition flex items-center justify-center gap-2">
+            <span>🏁 開始比賽</span>
+          </button>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ==================== SCREEN 2: ACTIVE GAME SCREEN (數學搶寶箱) ==================== -->
+  <div id="gameScreen" class="hidden flex-1 flex flex-col max-w-[1680px] w-full mx-auto px-2.5 sm:px-4 py-2 gap-2.5 h-screen overflow-hidden">
+    
+    <!-- Top Header Bar -->
+    <header class="bg-white/95 backdrop-blur-md rounded-2xl px-4 py-2 shadow-sm border border-white flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-2.5">
+        <span class="text-2xl">👑</span>
+        <h1 class="text-xl sm:text-2xl font-black tracking-tight">
+          <span class="text-[#0f4c5c]">數學</span><span class="text-[#ea580c]">搶寶箱</span>
+        </h1>
+        <span id="activeModePill" class="hidden sm:inline-block ml-2 text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+          小四專項
+        </span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="skipToNextQuestion()" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 font-bold text-xs sm:text-sm transition" title="教師跳過此題">
+          ⏭ 跳過本題
+        </button>
+        <button id="soundToggleGame" onclick="toggleSound()" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs sm:text-sm transition">
+          🔊
+        </button>
+        <button onclick="toggleFullScreen()" class="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs sm:text-sm flex items-center gap-1 transition">
+          <span>⛶</span> 全屏
+        </button>
+        <button onclick="exitMatch()" class="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 text-slate-700 font-bold text-xs sm:text-sm transition">
+          退出比賽
+        </button>
+      </div>
+    </header>
+
+    <!-- Upper Section: Real-time Race Track (Left) + Question Board (Right) -->
+    <div class="grid grid-cols-12 gap-3 shrink-0 h-[38vh] min-h-[235px] max-h-[325px]">
+      
+      <!-- Upper Left: Real-time Race Track (7 cols) -->
+      <div class="col-span-12 lg:col-span-7 bg-[#bae6fd]/90 rounded-3xl p-2.5 shadow-md border-2 border-white flex flex-col justify-between relative overflow-hidden">
+        <!-- Track Header -->
+        <div class="flex items-center justify-between px-2 pb-1 z-10">
+          <div class="flex items-center gap-1.5 font-black text-slate-800 text-sm">
+            <span>🏁 實時賽跑</span>
+          </div>
+          <div class="text-xs font-bold text-slate-600">
+            答對前進 · 首答再加1步 · 蓄滿3格加2步
+          </div>
+        </div>
+
+        <!-- Grassy & Pond Race Arena -->
+        <div class="flex-1 rounded-2xl bg-gradient-to-b from-[#65a30d] via-[#84cc16] to-[#4d7c0f] relative overflow-hidden flex border border-lime-700/30 shadow-inner">
+          <!-- Wooden Fence along top -->
+          <div class="absolute top-0 left-0 right-0 h-2.5 wooden-fence opacity-85 z-10"></div>
+
+          <!-- Left Lanes Area (80% width) -->
+          <div id="raceLanesContainer" class="w-[80%] h-full flex flex-col justify-evenly py-2.5 pl-2.5 pr-1 relative z-10">
+            <!-- Dynamically populated lanes -->
+          </div>
+
+          <!-- Checkered Finish Line -->
+          <div class="w-4 h-full checkered-line relative z-20 flex flex-col items-center shadow-md">
+            <span class="mt-1 bg-[#ea580c] text-white text-[10px] font-black px-1.5 py-0.5 rounded-md shadow whitespace-nowrap border border-amber-200">
+              終點
+            </span>
+          </div>
+
+          <!-- Right Treasure Island & Glowing Golden Chest Area (20% width) -->
+          <div class="flex-1 h-full bg-gradient-to-b from-[#38bdf8] via-[#7dd3fc] to-[#fde047] relative flex flex-col items-center justify-center overflow-hidden">
+            <!-- Sparkling aura & island grass/gems -->
+            <div class="absolute top-2 left-3 text-xs animate-pulse select-none pointer-events-none">✨</div>
+            <div class="absolute top-6 right-3 text-sm animate-bounce select-none pointer-events-none">💎</div>
+            <div class="absolute bottom-1.5 inset-x-0 flex justify-around text-xs opacity-95 pointer-events-none">
+              <span>🪙</span><span>👑</span><span>🪙</span>
+            </div>
+
+            <!-- Glowing Golden Treasure Chest SVG / Illustration -->
+            <div id="finishGoose" class="goose-anim relative z-10 flex flex-col items-center select-none cursor-pointer" onclick="playGooseHonk()">
+              <svg class="w-24 h-24 sm:w-28 sm:h-28 drop-shadow-lg" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Golden Island Base & Glow -->
+                <ellipse cx="60" cy="104" rx="38" ry="8" fill="rgba(251, 191, 36, 0.45)"/>
+                <circle cx="60" cy="56" r="42" fill="url(#chestGlow)" opacity="0.65"/>
+                <defs>
+                  <radialGradient id="chestGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#fef08a"/>
+                    <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+                  </radialGradient>
+                </defs>
+
+                <!-- Sparkling Stars around Chest -->
+                <path d="M22 30 L25 36 L31 39 L25 42 L22 48 L19 42 L13 39 L19 36 Z" fill="#fef08a"/>
+                <path d="M98 24 L100 29 L105 31 L100 33 L98 38 L96 33 L91 31 L96 29 Z" fill="#fde047"/>
+
+                <!-- Chest Lower Wooden Box -->
+                <rect x="24" y="56" width="72" height="40" rx="6" fill="#b45309" stroke="#78350f" stroke-width="3"/>
+                <!-- Wood Planks Horizontal Lines -->
+                <line x1="26" y1="69" x2="94" y2="69" stroke="#92400e" stroke-width="2.5"/>
+                <line x1="26" y1="82" x2="94" y2="82" stroke="#92400e" stroke-width="2.5"/>
+
+                <!-- Gold Trim Straps on Lower Box -->
+                <rect x="32" y="56" width="10" height="40" fill="#fbbf24" stroke="#b45309" stroke-width="2"/>
+                <rect x="78" y="56" width="10" height="40" fill="#fbbf24" stroke="#b45309" stroke-width="2"/>
+                <rect x="24" y="56" width="72" height="6" fill="#f59e0b"/>
+
+                <!-- Overflowing Gold Coins & Gems Peek -->
+                <circle cx="46" cy="54" r="6" fill="#fde047" stroke="#ca8a04" stroke-width="1.5"/>
+                <circle cx="56" cy="52" r="7" fill="#facc15" stroke="#ca8a04" stroke-width="1.5"/>
+                <circle cx="67" cy="53" r="6.5" fill="#fde047" stroke="#ca8a04" stroke-width="1.5"/>
+                <polygon points="75,55 80,47 86,55" fill="#38bdf8" stroke="#0284c7" stroke-width="1.2"/>
+                <polygon points="36,55 41,48 46,55" fill="#f43f5e" stroke="#e11d48" stroke-width="1.2"/>
+
+                <!-- Chest Domed Lid -->
+                <path d="M22 52 C22 30, 98 30, 98 52 Z" fill="#d97706" stroke="#78350f" stroke-width="3" stroke-linejoin="round"/>
+                <!-- Gold Straps on Lid -->
+                <path d="M32 52 C32 35, 42 35, 42 52 Z" fill="#fbbf24" stroke="#b45309" stroke-width="2"/>
+                <path d="M78 52 C78 35, 88 35, 88 52 Z" fill="#fbbf24" stroke="#b45309" stroke-width="2"/>
+
+                <!-- Center Golden Lock Plate & Ruby Gem -->
+                <rect x="51" y="47" width="18" height="22" rx="4" fill="#fef08a" stroke="#b45309" stroke-width="2.5"/>
+                <circle cx="60" cy="56" r="4.5" fill="#ef4444" stroke="#b91c1c" stroke-width="1.5"/>
+                <circle cx="58.5" cy="54.5" r="1.3" fill="#ffffff"/>
+              </svg>
+              <span class="text-[11px] font-black text-amber-950 bg-amber-300/95 px-2.5 py-0.5 rounded-full -mt-2 shadow border border-white">點我閃耀奪寶</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upper Right: Question & Timer Board (5 cols) -->
+      <div class="col-span-12 lg:col-span-5 bg-white rounded-3xl p-4 sm:p-5 shadow-md border-[3px] border-[#fde047] flex flex-col justify-between relative">
+        <!-- Top row: Question Index & Countdown Pill -->
+        <div class="flex items-center justify-between">
+          <div id="questionIndexLabel" class="text-base sm:text-lg font-black text-slate-700">
+            第 1 題
+          </div>
+          <div id="timerBadge" class="px-4 py-1 rounded-full bg-[#fff7ed] border border-[#fed7aa] text-[#ea580c] font-black text-lg sm:text-xl num-font shadow-sm">
+            12秒
+          </div>
+        </div>
+
+        <!-- Center Topic Tag & Huge Math Equation -->
+        <div class="flex flex-col items-center justify-center my-auto py-1">
+          <span id="questionTopicBadge" class="px-3.5 py-1 rounded-full bg-[#fef3c7] text-[#92400e] font-bold text-xs sm:text-sm mb-2">
+            兩位數除法
+          </span>
+          <div id="equationDisplay" class="num-font text-4xl sm:text-5xl xl:text-6xl font-black text-[#0f172a] tracking-wide text-center leading-tight select-none">
+            84 ÷ 12 = ?
+          </div>
+        </div>
+
+          <!-- Bottom Status & First-Blood Reward Banner -->
+        <div class="flex flex-col items-center gap-1.5 min-h-[48px] justify-end">
+          <div id="questionSubPrompt" class="text-xs sm:text-sm font-bold text-slate-400">
+            輸入答案，點擊確定提交
+          </div>
+          <div id="firstBloodBanner" class="hidden px-3.5 py-1 rounded-full bg-[#fef3c7] border border-[#fde68a] text-[#b45309] font-extrabold text-xs sm:text-sm flex items-center gap-1.5 shadow-sm">
+            <span>🏆</span>
+            <span id="firstBloodText">玩家2 獲得首答獎勵 +1步</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Lower Section: Multi-player Side-by-Side Keypads -->
+    <div id="keypadsGrid" class="flex-1 grid gap-3 items-stretch min-h-0">
+      <!-- Dynamically populated 2, 3, or 4 player keypads -->
+    </div>
+
+  </div>
+
+  <!-- ==================== MODAL 1: CUSTOM QUESTION BANK EDITOR ==================== -->
+  <div id="customBankModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border-2 border-emerald-200 flex flex-col gap-4">
+      <div class="flex items-center justify-between border-b pb-3">
+        <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">
+          <span>✏️ 在線編輯自定義題庫</span>
+        </h3>
+        <button onclick="closeCustomModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">✕</button>
+      </div>
+      <div class="text-xs text-slate-600 bg-amber-50 border border-amber-200 rounded-xl p-3 leading-relaxed">
+        每行輸入一題，格式為：<code class="font-bold text-rose-600">算式題目,整數答案</code>（使用半形逗號分隔）。<br/>
+        例如：<code class="font-bold">96 ÷ 16,6</code> 或 <code class="font-bold">(28 + 12) × 5,200</code>
+      </div>
+      <textarea id="customBankTextarea" rows="9" class="w-full rounded-2xl border-2 border-slate-200 focus:border-emerald-500 focus:outline-none p-3.5 font-mono text-sm text-slate-800 select-text" placeholder="84 ÷ 12,7&#10;125 × 8,1000"></textarea>
+      <div class="flex items-center justify-between pt-2">
+        <button onclick="loadSampleP4CustomBank()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition">
+          🔄 載入小四精選範例題
+        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="closeCustomModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50">取消</button>
+          <button onclick="saveCustomModal()" class="px-6 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow">保存題庫</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 2: VICTORY PODIUM MODAL (成功奪得大寶箱) ==================== -->
+  <div id="victoryModal" class="fixed inset-0 bg-slate-900/65 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border-4 border-amber-300 flex flex-col items-center text-center relative overflow-hidden">
+      <div class="text-6xl mb-2 goose-anim">👑🎁💎</div>
+      <h2 class="text-2xl sm:text-3xl font-black text-slate-800 mb-1" id="victoryHeadline">
+        恭喜奪得黃金大寶箱！
+      </h2>
+      <p class="text-sm font-bold text-slate-500 mb-5" id="victorySubline">
+        小四數學奪寶神算手誕生了！
+      </p>
+
+      <!-- Leaderboard Cards -->
+      <div id="podiumList" class="w-full space-y-2.5 mb-6">
+        <!-- Populated by JS -->
+      </div>
+
+      <div class="flex flex-wrap items-center justify-center gap-3 w-full">
+        <button onclick="restartSameMatch()" class="flex-1 py-3.5 px-6 rounded-2xl bg-gradient-to-b from-emerald-400 to-emerald-600 hover:from-emerald-500 hover:to-emerald-700 text-white font-black text-base shadow-[0_4px_0_#047857] active:translate-y-1 transition">
+          🔄 再玩一局
+        </button>
+        <button onclick="exitMatch()" class="flex-1 py-3.5 px-6 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-base border border-slate-300 transition">
+          ⚙️ 返回課堂設置
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastBox" class="fixed bottom-5 right-5 bg-slate-800 text-white px-4 py-2.5 rounded-2xl shadow-xl font-bold text-sm z-50 hidden transition-opacity"></div>
+
+  <!-- ==================== APPLICATION SCRIPT ==================== -->
+  <script>
+    /********************************************************************
+     * 1. ANIMALS, THEMES & CONFIGURATION STATE
+     ********************************************************************/
+    const ANIMALS = [
+      { id: 'fox',     emoji: '🦊', name: '小狐狸' },
+      { id: 'panda',   emoji: '🐼', name: '小熊貓' },
+      { id: 'tiger',   emoji: '🐯', name: '小老虎' },
+      { id: 'penguin', emoji: '🐧', name: '小企鵝' },
+      { id: 'frog',    emoji: '🐸', name: '小青蛙' },
+      { id: 'lion',    emoji: '🦁', name: '小獅子' },
+      { id: 'koala',   emoji: '🐨', name: '無尾熊' },
+      { id: 'monkey',  emoji: '🐵', name: '小猴子' }
+    ];
+
+    const PLAYER_THEMES = [
+      {
+        // Player 1: Orange
+        borderTop: 'border-t-[5px] border-t-[#f97316]',
+        cardBorder: 'border-[#fed7aa]',
+        cardBg: 'bg-[#fffaf5]',
+        titleColor: 'text-[#ea580c]',
+        laneBg: 'bg-[#eab308]/75 border-[#fef08a]',
+        btnBg: 'bg-[#f49d60] hover:bg-[#ea580c]',
+        displayCorrectBorder: 'border-[#4ade80] bg-[#f0fdf4]',
+        dotActive: 'bg-[#f59e0b] border-[#d97706]'
+      },
+      {
+        // Player 2: Green
+        borderTop: 'border-t-[5px] border-t-[#22c55e]',
+        cardBorder: 'border-[#bbf7d0]',
+        cardBg: 'bg-[#f4fbf7]',
+        titleColor: 'text-[#16a34a]',
+        laneBg: 'bg-[#84cc16]/75 border-[#dcfce7]',
+        btnBg: 'bg-[#68b888] hover:bg-[#16a34a]',
+        displayCorrectBorder: 'border-[#22c55e] bg-[#f0fdf4]',
+        dotActive: 'bg-[#eab308] border-[#ca8a04]'
+      },
+      {
+        // Player 3: Blue
+        borderTop: 'border-t-[5px] border-t-[#3b82f6]',
+        cardBorder: 'border-[#bfdbfe]',
+        cardBg: 'bg-[#f4f9ff]',
+        titleColor: 'text-[#2563eb]',
+        laneBg: 'bg-[#67e8f9]/65 border-[#e0f2fe]',
+        btnBg: 'bg-[#2b88d8] hover:bg-[#1d4ed8]',
+        displayCorrectBorder: 'border-[#3b82f6] bg-[#eff6ff]',
+        dotActive: 'bg-[#f59e0b] border-[#d97706]'
+      },
+      {
+        // Player 4: Purple
+        borderTop: 'border-t-[5px] border-t-[#a855f7]',
+        cardBorder: 'border-[#e9d5ff]',
+        cardBg: 'bg-[#faf5ff]',
+        titleColor: 'text-[#9333ea]',
+        laneBg: 'bg-[#c084fc]/65 border-[#f3e8ff]',
+        btnBg: 'bg-[#9b66d6] hover:bg-[#7e22ce]',
+        displayCorrectBorder: 'border-[#a855f7] bg-[#faf5ff]',
+        dotActive: 'bg-[#f59e0b] border-[#d97706]'
+      }
+    ];
+
+    const TOPIC_INFO = {
+      table_mul_div: { label: '表內乘除',           sample: '範例：32 ÷ 4 = 8、7 × 8 = 56' },
+      p4_mul_2x1:    { label: '兩位數乘以一位數',   sample: '範例：24 × 3 = 72、15 × 6 = 90' },
+      p4_div:        { label: '除數是兩位數的除法', sample: '範例：84 ÷ 12 = 7、180 ÷ 15 = 12' },
+      p4_mixed:      { label: '四則混合運算',       sample: '範例：(35 - 15) × 4 = 80' },
+      custom:        { label: '自定義題目',         sample: '使用教師自定義題庫出題' }
+    };
+
+    const DEFAULT_CUSTOM_QUESTIONS = [
+      { q: '32 ÷ 4', a: 8 },
+      { q: '24 × 3', a: 72 },
+      { q: '15 × 6', a: 90 },
+      { q: '48 × 2', a: 96 },
+      { q: '35 × 4', a: 140 },
+      { q: '84 ÷ 12', a: 7 },
+      { q: '96 ÷ 16', a: 6 },
+      { q: '180 ÷ 15', a: 12 },
+      { q: '(35 - 15) × 4', a: 80 },
+      { q: '24 + 16 ÷ 4', a: 28 }
+    ];
+
+    let config = {
+      playerCount: 3,
+      topicMode: 'p4_mul_2x1',
+      raceDistance: 12,
+      questionTime: 12,
+      soundEnabled: true,
+      customQuestions: []
+    };
+
+    let players = [
+      { id: 0, name: '玩家1', avatarIdx: 0, steps: 0, streak: 0, energy: 0, input: '', submitted: false, isCorrect: false, correctCount: 0, totalAnswered: 0, lastGainText: '' },
+      { id: 1, name: '玩家2', avatarIdx: 1, steps: 0, streak: 0, energy: 0, input: '', submitted: false, isCorrect: false, correctCount: 0, totalAnswered: 0, lastGainText: '' },
+      { id: 2, name: '玩家3', avatarIdx: 2, steps: 0, streak: 0, energy: 0, input: '', submitted: false, isCorrect: false, correctCount: 0, totalAnswered: 0, lastGainText: '' },
+      { id: 3, name: '玩家4', avatarIdx: 3, steps: 0, streak: 0, energy: 0, input: '', submitted: false, isCorrect: false, correctCount: 0, totalAnswered: 0, lastGainText: '' }
+    ];
+
+    let gameState = {
+      isRunning: false,
+      questionIndex: 1,
+      currentQuestion: { q: '32 ÷ 4', a: 8 },
+      timeLeft: 12,
+      timerId: null,
+      roundTransitionId: null,
+      firstBloodPlayerId: null,
+      roundEnded: false,
+      usedCustomIndices: []
+    };
+
+    /********************************************************************
+     * 2. WEB AUDIO SYNTHESIZER (NO EXTERNAL MP3 NEEDED)
+     ********************************************************************/
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtx = new AudioContext();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playTone(freq, duration = 0.08, type = 'sine', gainVal = 0.12, delay = 0) {
+      if (!config.soundEnabled) return;
+      try {
+        const ctx = getAudioCtx();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + delay);
+        gain.gain.setValueAtTime(gainVal, ctx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime + delay);
+        osc.stop(ctx.currentTime + delay + duration);
+      } catch (e) {}
+    }
+
+    function playKeySound() {
+      playTone(540, 0.05, 'triangle', 0.08);
+    }
+
+    function playCorrectSound(isFirst) {
+      if (isFirst) {
+        playTone(587.33, 0.09, 'triangle', 0.16, 0);
+        playTone(783.99, 0.09, 'triangle', 0.16, 0.08);
+        playTone(1046.50, 0.22, 'triangle', 0.18, 0.16);
+      } else {
+        playTone(523.25, 0.09, 'sine', 0.14, 0);
+        playTone(659.25, 0.16, 'sine', 0.15, 0.08);
+      }
+    }
+
+    function playWrongSound() {
+      playTone(240, 0.14, 'sawtooth', 0.1, 0);
+      playTone(185, 0.2, 'sawtooth', 0.1, 0.12);
+    }
+
+    function playGooseHonk() {
+      if (!config.soundEnabled) return;
+      // Sparkling Treasure Chest Chime Sound
+      playTone(587.33, 0.08, 'triangle', 0.12, 0);
+      playTone(880.00, 0.09, 'triangle', 0.13, 0.07);
+      playTone(1174.66, 0.16, 'sine', 0.15, 0.14);
+      const gooseEl = document.getElementById('finishGoose');
+      if (gooseEl) {
+        gooseEl.classList.add('goose-excited');
+        setTimeout(() => gooseEl.classList.remove('goose-excited'), 600);
+      }
+    }
+
+    function playVictoryFanfare() {
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((n, idx) => playTone(n, 0.18, 'triangle', 0.18, idx * 0.12));
+      setTimeout(() => playGooseHonk(), 500);
+    }
+
+    function toggleSound() {
+      config.soundEnabled = !config.soundEnabled;
+      const icon = config.soundEnabled ? '🔊' : '🔇';
+      const txt = config.soundEnabled ? '音效開啟' : '音效關閉';
+      document.getElementById('soundIconSetup').textContent = icon;
+      document.getElementById('soundTextSetup').textContent = txt;
+      document.getElementById('soundToggleGame').textContent = icon;
+      if (config.soundEnabled) playKeySound();
+    }
+
+    /********************************************************************
+     * 3. PRIMARY 4 MATH QUESTION GENERATOR
+     ********************************************************************/
+    function randInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function generateQuestion() {
+      const mode = config.topicMode;
+
+      // 1. Custom Bank Mode (自定義題目)
+      if (mode === 'custom' && config.customQuestions.length > 0) {
+        if (gameState.usedCustomIndices.length >= config.customQuestions.length) {
+          gameState.usedCustomIndices = [];
+        }
+        const available = config.customQuestions
+          .map((_, idx) => idx)
+          .filter(idx => !gameState.usedCustomIndices.includes(idx));
+        const pickIdx = available[randInt(0, available.length - 1)];
+        gameState.usedCustomIndices.push(pickIdx);
+        return { ...config.customQuestions[pickIdx] };
+      }
+
+      // 2. 表內乘除 (Multiplication & Division within 9x9)
+      if (mode === 'table_mul_div') {
+        const n1 = randInt(2, 9);
+        const n2 = randInt(2, 9);
+        if (Math.random() < 0.6) {
+          return { q: `${n1 * n2} ÷ ${n1}`, a: n2 };
+        } else {
+          return { q: `${n1} × ${n2}`, a: n1 * n2 };
+        }
+      }
+
+      // 3. 兩位數乘以一位數 (2-Digit × 1-Digit Mental Math for P4)
+      if (mode === 'p4_mul_2x1') {
+        const a = randInt(12, 98);
+        const b = randInt(2, 9);
+        return { q: `${a} × ${b}`, a: a * b };
+      }
+
+      // 4. 除數是兩位數的除法 (Exact Division by 2-Digit Divisor)
+      if (mode === 'p4_div') {
+        const pattern = randInt(1, 3);
+        if (pattern === 1) {
+          const divisor = randInt(11, 19);
+          const quotient = randInt(3, 12);
+          return { q: `${divisor * quotient} ÷ ${divisor}`, a: quotient };
+        } else if (pattern === 2) {
+          const divisor = [12, 14, 15, 16, 18, 20, 24, 25, 30, 40][randInt(0, 9)];
+          const quotient = randInt(4, 15);
+          return { q: `${divisor * quotient} ÷ ${divisor}`, a: quotient };
+        } else {
+          const divisor = randInt(12, 28);
+          const quotient = randInt(4, 9);
+          return { q: `${divisor * quotient} ÷ ${divisor}`, a: quotient };
+        }
+      }
+
+      // 5. 四則混合運算 (Four Operations Mixed with Parentheses & Order of Operations)
+      const subType = randInt(1, 5);
+      if (subType === 1) {
+        // A + B × C
+        const b = randInt(4, 14);
+        const c = randInt(3, 8);
+        const a = randInt(12, 60);
+        return { q: `${a} + ${b} × ${c}`, a: a + b * c };
+      } else if (subType === 2) {
+        // A - B × C
+        const b = randInt(4, 15);
+        const c = randInt(3, 7);
+        const prod = b * c;
+        const a = prod + randInt(10, 55);
+        return { q: `${a} - ${b} × ${c}`, a: a - prod };
+      } else if (subType === 3) {
+        // A + B ÷ C
+        const c = randInt(3, 9);
+        const qVal = randInt(4, 12);
+        const b = c * qVal;
+        const a = randInt(15, 75);
+        return { q: `${a} + ${b} ÷ ${c}`, a: a + qVal };
+      } else if (subType === 4) {
+        // (A - B) × C
+        const diff = randInt(6, 18);
+        const b = randInt(12, 35);
+        const a = b + diff;
+        const c = randInt(3, 8);
+        return { q: `(${a} - ${b}) × ${c}`, a: diff * c };
+      } else {
+        // (A + B) ÷ C
+        const c = randInt(4, 9);
+        const ans = randInt(6, 15);
+        const total = c * ans;
+        const a = randInt(8, total - 6);
+        const b = total - a;
+        return { q: `(${a} + ${b}) ÷ ${c}`, a: ans };
+      }
+    }
+
+    /********************************************************************
+     * 4. SETUP SCREEN LOGIC & CUSTOM QUESTION BANK
+     ********************************************************************/
+    function initSetupScreen() {
+      // Load saved custom questions from localStorage
+      try {
+        const saved = localStorage.getItem('p4_goose_custom_questions');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            config.customQuestions = parsed;
+          } else {
+            config.customQuestions = [...DEFAULT_CUSTOM_QUESTIONS];
+          }
+        } else {
+          config.customQuestions = [...DEFAULT_CUSTOM_QUESTIONS];
+        }
+      } catch (e) {
+        config.customQuestions = [...DEFAULT_CUSTOM_QUESTIONS];
+      }
+
+      updateSetupControlsUI();
+      renderPlayerSetupCards();
+    }
+
+    function updateSetupControlsUI() {
+      // Highlight active buttons in groups
+      styleButtonGroup('playerCountGroup', config.playerCount);
+      styleButtonGroup('topicModeGroup', config.topicMode);
+      styleButtonGroup('raceDistanceGroup', config.raceDistance);
+      styleButtonGroup('questionTimeGroup', config.questionTime);
+
+      // Update topic preview & summary labels
+      const tInfo = TOPIC_INFO[config.topicMode] || TOPIC_INFO.p4_mul_2x1;
+      document.getElementById('modePreviewText').textContent = tInfo.sample;
+      document.getElementById('summaryModeLabel').textContent = tInfo.label;
+      document.getElementById('summaryDistLabel').textContent = `${config.raceDistance}步`;
+
+      // Update custom bank badge
+      document.getElementById('customCountBadge').textContent = `已導入 ${config.customQuestions.length} 題`;
+
+      const customBox = document.getElementById('customBankBox');
+      if (config.topicMode === 'custom') {
+        customBox.className = 'bg-emerald-50/80 border-2 border-emerald-400 rounded-2xl p-3.5 transition-all shadow-sm';
+      } else {
+        customBox.className = 'bg-slate-50/90 border border-slate-200 rounded-2xl p-3.5 transition-all';
+      }
+    }
+
+    function resetToHomeDefaults() {
+      playKeySound();
+      config.playerCount = 3;
+      config.topicMode = 'p4_mul_2x1';
+      config.raceDistance = 12;
+      config.questionTime = 12;
+      updateSetupControlsUI();
+      renderPlayerSetupCards();
+      showToast('已重置為課堂預設配置');
+    }
+
+    function styleButtonGroup(groupId, activeVal) {
+      const container = document.getElementById(groupId);
+      if (!container) return;
+      const buttons = container.querySelectorAll('button');
+      buttons.forEach(btn => {
+        const val = btn.getAttribute('data-val');
+        const spanClass = val === 'custom' ? 'col-span-2' : '';
+        if (String(val) === String(activeVal)) {
+          btn.className = `cfg-btn ${spanClass} py-2.5 px-2 rounded-xl font-black text-xs sm:text-sm border-2 border-[#22c55e] bg-[#dcfce7] text-[#15803d] shadow-sm transition`;
+        } else {
+          btn.className = `cfg-btn ${spanClass} py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition`;
+        }
+      });
+    }
+
+    function setPlayerCount(count) {
+      playKeySound();
+      config.playerCount = count;
+      updateSetupControlsUI();
+      renderPlayerSetupCards();
+    }
+
+    function setTopicMode(mode) {
+      playKeySound();
+      config.topicMode = mode;
+      updateSetupControlsUI();
+    }
+
+    function setRaceDistance(dist) {
+      playKeySound();
+      config.raceDistance = dist;
+      updateSetupControlsUI();
+    }
+
+    function setQuestionTime(sec) {
+      playKeySound();
+      config.questionTime = sec;
+      updateSetupControlsUI();
+    }
+
+    function renderPlayerSetupCards() {
+      const grid = document.getElementById('playerSetupGrid');
+      grid.innerHTML = '';
+
+      // Render only the selected number of player setup cards (2, 3, or 4 players)
+      for (let i = 0; i < config.playerCount; i++) {
+        const p = players[i];
+        const theme = PLAYER_THEMES[i];
+        const animal = ANIMALS[p.avatarIdx];
+
+        const card = document.createElement('div');
+        card.className = `rounded-2xl p-3.5 border ${theme.cardBorder} ${theme.cardBg} ${theme.borderTop} shadow-sm transition-all`;
+
+        // Avatar selection buttons row
+        let avatarBtnsHtml = '';
+        ANIMALS.forEach((anim, aIdx) => {
+          const isSelected = p.avatarIdx === aIdx;
+          avatarBtnsHtml += `
+            <button type="button" onclick="selectPlayerAvatar(${i}, ${aIdx})"
+              title="${anim.name}"
+              class="w-9 h-9 rounded-xl flex items-center justify-center text-xl transition ${
+                isSelected
+                  ? 'bg-white border-2 border-amber-500 shadow scale-110'
+                  : 'bg-white/70 border border-slate-200 hover:bg-white'
+              }">
+              ${anim.emoji}
+            </button>
+          `;
+        });
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between mb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="text-3xl">${animal.emoji}</span>
+              <span class="font-black text-base ${theme.titleColor}">玩家 ${i + 1}</span>
+            </div>
+            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-white/80 text-slate-500 border border-slate-200">
+              ${animal.name}
+            </span>
+          </div>
+          <div class="mb-3">
+            <input type="text" maxlength="10" value="${p.name}"
+              oninput="updatePlayerName(${i}, this.value)"
+              placeholder="玩家${i + 1}"
+              class="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 focus:border-emerald-500 focus:outline-none font-bold text-sm text-slate-800 select-text" />
+          </div>
+          <div class="flex items-center justify-between gap-1">
+            ${avatarBtnsHtml}
+          </div>
+        `;
+        grid.appendChild(card);
+      }
+    }
+
+    function updatePlayerName(playerIdx, newName) {
+      players[playerIdx].name = newName.trim() || `玩家${playerIdx + 1}`;
+    }
+
+    function selectPlayerAvatar(playerIdx, avatarIdx) {
+      playKeySound();
+      players[playerIdx].avatarIdx = avatarIdx;
+      renderPlayerSetupCards();
+    }
+
+    function randomizePlayerAvatars() {
+      playKeySound();
+      const indices = [0, 1, 2, 3, 4, 5, 6, 7].sort(() => Math.random() - 0.5);
+      for (let i = 0; i < 4; i++) {
+        players[i].avatarIdx = indices[i];
+      }
+      renderPlayerSetupCards();
+    }
+
+    // Custom CSV Template Download & Upload
+    function downloadCsvTemplate() {
+      const csvContent = '\uFEFF題目,答案\n32 ÷ 4,8\n24 × 3,72\n15 × 6,90\n48 × 2,96\n84 ÷ 12,7\n96 ÷ 16,6\n(35 - 15) × 4,80\n24 + 16 ÷ 4,28\n';
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '小四數學搶寶箱_題庫模板.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('已下載 CSV 題庫模板！');
+    }
+
+    function handleCsvUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const parsed = parseLinesToQuestions(text);
+        if (parsed.length > 0) {
+          config.customQuestions = parsed;
+          saveCustomQuestionsToStorage();
+          config.topicMode = 'custom';
+          updateSetupControlsUI();
+          showToast(`成功導入 ${parsed.length} 道題目！`);
+        } else {
+          showToast('未能識別有效題目，請檢查格式（題目,整數答案）');
+        }
+        event.target.value = '';
+      };
+      reader.readAsText(file, 'UTF-8');
+    }
+
+    function parseLinesToQuestions(rawText) {
+      const lines = rawText.split(/\r?\n/);
+      const result = [];
+      for (let line of lines) {
+        line = line.trim();
+        if (!line || line.startsWith('題目') || line.startsWith('题目')) continue;
+        const parts = line.split(/[,，\t]/);
+        if (parts.length >= 2) {
+          const qText = parts[0].trim()
+            .replace(/\*/g, '×')
+            .replace(/\//g, '÷');
+          const ansNum = parseInt(parts[1].trim(), 10);
+          if (qText && !isNaN(ansNum) && ansNum >= 0) {
+            result.push({ q: qText, a: ansNum });
+          }
+        }
+      }
+      return result;
+    }
+
+    function saveCustomQuestionsToStorage() {
+      try {
+        localStorage.setItem('p4_goose_custom_questions', JSON.stringify(config.customQuestions));
+      } catch (e) {}
+    }
+
+    function clearCustomBank() {
+      config.customQuestions = [];
+      saveCustomQuestionsToStorage();
+      updateSetupControlsUI();
+      showToast('已清空自定義題庫');
+    }
+
+    function openCustomModal() {
+      const lines = config.customQuestions.map(item => `${item.q},${item.a}`).join('\n');
+      document.getElementById('customBankTextarea').value = lines;
+      const modal = document.getElementById('customBankModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeCustomModal() {
+      const modal = document.getElementById('customBankModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function loadSampleP4CustomBank() {
+      const lines = DEFAULT_CUSTOM_QUESTIONS.map(item => `${item.q},${item.a}`).join('\n');
+      document.getElementById('customBankTextarea').value = lines;
+    }
+
+    function saveCustomModal() {
+      const raw = document.getElementById('customBankTextarea').value;
+      const parsed = parseLinesToQuestions(raw);
+      if (parsed.length === 0) {
+        showToast('請至少輸入一道有效格式的題目（例如：84 ÷ 12,7）');
+        return;
+      }
+      config.customQuestions = parsed;
+      saveCustomQuestionsToStorage();
+      config.topicMode = 'custom';
+      updateSetupControlsUI();
+      closeCustomModal();
+      showToast(`已保存 ${parsed.length} 道自定義題目！`);
+    }
+
+    /********************************************************************
+     * 5. CORE GAMEPLAY ENGINE (START, RACE TRACK, KEYPADS, SCORING)
+     ********************************************************************/
+    function startMatch() {
+      if (config.topicMode === 'custom' && config.customQuestions.length === 0) {
+        showToast('自定義題庫目前為空，已自動載入小四預設題庫！');
+        config.customQuestions = [...DEFAULT_CUSTOM_QUESTIONS];
+        updateSetupControlsUI();
+      }
+
+      playGooseHonk();
+
+      // Reset players stats for the match
+      for (let i = 0; i < config.playerCount; i++) {
+        players[i].steps = 0;
+        players[i].streak = 0;
+        players[i].energy = 0;
+        players[i].input = '';
+        players[i].submitted = false;
+        players[i].isCorrect = false;
+        players[i].correctCount = 0;
+        players[i].totalAnswered = 0;
+        players[i].lastGainText = '輸入答案後提交';
+      }
+
+      gameState.isRunning = true;
+      gameState.questionIndex = 0;
+      gameState.usedCustomIndices = [];
+
+      // Switch screens
+      document.getElementById('setupScreen').classList.add('hidden');
+      document.getElementById('victoryModal').classList.add('hidden');
+      document.getElementById('victoryModal').classList.remove('flex');
+      document.getElementById('gameScreen').classList.remove('hidden');
+
+      const tInfo = TOPIC_INFO[config.topicMode] || TOPIC_INFO.p4_mul_2x1;
+      document.getElementById('activeModePill').textContent = `${tInfo.label} · 目標 ${config.raceDistance} 步`;
+      document.getElementById('questionTopicBadge').textContent = tInfo.label;
+
+      buildRaceTrackDOM();
+      buildKeypadsDOM();
+      loadNextQuestion();
+    }
+
+    function buildRaceTrackDOM() {
+      const container = document.getElementById('raceLanesContainer');
+      container.innerHTML = '';
+
+      for (let i = 0; i < config.playerCount; i++) {
+        const p = players[i];
+        const theme = PLAYER_THEMES[i];
+        const animal = ANIMALS[p.avatarIdx];
+
+        const lane = document.createElement('div');
+        lane.className = `w-full flex-1 my-1 rounded-2xl border-2 ${theme.laneBg} relative flex items-center px-3 overflow-hidden shadow-sm`;
+
+        lane.innerHTML = `
+          <!-- Start Badge -->
+          <span class="absolute top-1 left-2 bg-white/90 text-slate-700 font-black text-[10px] px-2 py-0.5 rounded-full shadow-sm z-10">
+            ${p.name}
+          </span>
+          <!-- Dashed Center Track Line -->
+          <div class="w-full border-b-[3px] border-dashed border-white/85"></div>
+          <!-- Moving Racer Avatar -->
+          <div id="racerAvatar_${i}" style="left: 2%;" class="absolute top-1/2 -translate-y-1/2 transition-all duration-500 ease-out flex flex-col items-center z-20">
+            <div class="text-3xl sm:text-4xl drop-shadow racer-bob select-none">${animal.emoji}</div>
+            <span class="bg-white/95 text-slate-800 font-black text-[10px] px-2 py-0.2 rounded-full shadow border border-slate-200 -mt-1 whitespace-nowrap">
+              ${p.name} (<span id="racerStepNum_${i}">0</span>/${config.raceDistance})
+            </span>
+          </div>
+        `;
+        container.appendChild(lane);
+      }
+    }
+
+    function updateRaceTrackPositions() {
+      for (let i = 0; i < config.playerCount; i++) {
+        const p = players[i];
+        const ratio = Math.min(1, p.steps / config.raceDistance);
+        // Map 0..1 ratio to 2%..88% of lane width so avatar stops right at finish line
+        const leftPercent = 2 + ratio * 86;
+        const avatarEl = document.getElementById(`racerAvatar_${i}`);
+        const stepEl = document.getElementById(`racerStepNum_${i}`);
+        if (avatarEl) avatarEl.style.left = `${leftPercent}%`;
+        if (stepEl) stepEl.textContent = p.steps;
+      }
+    }
+
+    function buildKeypadsDOM() {
+      const grid = document.getElementById('keypadsGrid');
+      grid.innerHTML = '';
+      grid.className = `flex-1 grid gap-3 items-stretch min-h-0 ${
+        config.playerCount === 2 ? 'grid-cols-2 max-w-4xl mx-auto w-full' :
+        config.playerCount === 3 ? 'grid-cols-3' : 'grid-cols-4'
+      }`;
+
+      for (let i = 0; i < config.playerCount; i++) {
+        const p = players[i];
+        const theme = PLAYER_THEMES[i];
+        const animal = ANIMALS[p.avatarIdx];
+
+        const card = document.createElement('div');
+        card.className = `rounded-3xl bg-white/95 border-2 ${theme.cardBorder} ${theme.borderTop} p-3 sm:p-3.5 shadow-md flex flex-col justify-between`;
+
+        card.innerHTML = `
+          <!-- Card Header: Avatar + Name & 3 Energy Dots -->
+          <div class="flex items-center justify-between px-1 mb-1.5">
+            <div class="flex items-center gap-1.5">
+              <span class="text-2xl">${animal.emoji}</span>
+              <span class="font-black text-base sm:text-lg ${theme.titleColor} truncate max-w-[120px]">${p.name}</span>
+            </div>
+            <div id="energyDots_${i}" class="flex items-center gap-1.5" title="蓄滿3格能量額外+2步">
+              <span class="w-3 h-3 rounded-full border border-slate-300 bg-white inline-block"></span>
+              <span class="w-3 h-3 rounded-full border border-slate-300 bg-white inline-block"></span>
+              <span class="w-3 h-3 rounded-full border border-slate-300 bg-white inline-block"></span>
+            </div>
+          </div>
+
+          <!-- Answer Input Display Box -->
+          <div id="inputBox_${i}" class="w-full h-11 sm:h-12 rounded-2xl border-2 border-slate-200 bg-slate-50/70 flex items-center justify-center num-font text-2xl sm:text-3xl font-black text-slate-800 mb-2 transition-colors">
+            <span id="inputText_${i}"></span>
+          </div>
+
+          <!-- 4x3 Numeric Keypad Grid -->
+          <div class="flex-1 grid grid-cols-3 gap-1.5 sm:gap-2 my-0.5">
+            ${[1,2,3,4,5,6,7,8,9].map(num => `
+              <button type="button" onpointerdown="handlePadPress(event, ${i}, '${num}')"
+                class="key-btn rounded-xl bg-[#f8fafc] hover:bg-slate-100 border border-slate-200/80 num-font font-bold text-lg sm:text-xl text-slate-700 flex items-center justify-center">
+                ${num}
+              </button>
+            `).join('')}
+            <button type="button" onpointerdown="handlePadPress(event, ${i}, 'CLEAR')"
+              class="key-btn rounded-xl bg-[#f8fafc] hover:bg-slate-100 border border-slate-200/80 font-bold text-xs sm:text-sm text-slate-600 flex items-center justify-center">
+              清空
+            </button>
+            <button type="button" onpointerdown="handlePadPress(event, ${i}, '0')"
+              class="key-btn rounded-xl bg-[#f8fafc] hover:bg-slate-100 border border-slate-200/80 num-font font-bold text-lg sm:text-xl text-slate-700 flex items-center justify-center">
+              0
+            </button>
+            <button type="button" onpointerdown="handlePadPress(event, ${i}, 'BACK')"
+              class="key-btn rounded-xl bg-[#f8fafc] hover:bg-slate-100 border border-slate-200/80 font-bold text-xs sm:text-sm text-slate-600 flex items-center justify-center">
+              退格
+            </button>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="button" id="submitBtn_${i}" onpointerdown="handlePadSubmit(event, ${i})"
+            class="mt-2 w-full py-2.5 sm:py-3 rounded-2xl ${theme.btnBg} text-white font-black text-base sm:text-lg shadow transition active:translate-y-0.5">
+            確定提交
+          </button>
+
+          <!-- Bottom Feedback Line -->
+          <div id="statusText_${i}" class="mt-1.5 text-center text-[11px] sm:text-xs font-bold text-slate-500 truncate">
+            輸入答案後提交
+          </div>
+        `;
+
+        grid.appendChild(card);
+      }
+    }
+
+    function updatePlayerEnergyDots(playerIdx) {
+      const container = document.getElementById(`energyDots_${playerIdx}`);
+      if (!container) return;
+      const p = players[playerIdx];
+      const theme = PLAYER_THEMES[playerIdx];
+      let html = '';
+      for (let d = 0; d < 3; d++) {
+        if (d < p.energy) {
+          html += `<span class="w-3 h-3 rounded-full border ${theme.dotActive} inline-block shadow-sm"></span>`;
+        } else {
+          html += `<span class="w-3 h-3 rounded-full border border-slate-300 bg-white inline-block"></span>`;
+        }
+      }
+      container.innerHTML = html;
+    }
+
+    // Simultaneous Multi-Touch Safe Keypad Handlers
+    function handlePadPress(event, playerIdx, key) {
+      if (event) event.preventDefault();
+      if (!gameState.isRunning || gameState.roundEnded) return;
+      const p = players[playerIdx];
+      if (p.submitted) return;
+
+      playKeySound();
+
+      if (key === 'CLEAR') {
+        p.input = '';
+      } else if (key === 'BACK') {
+        p.input = p.input.slice(0, -1);
+      } else {
+        if (p.input.length < 8) {
+          // Avoid leading multiple zeros
+          if (p.input === '0') {
+            p.input = key;
+          } else {
+            p.input += key;
+          }
+        }
+      }
+
+      const inputTextEl = document.getElementById(`inputText_${playerIdx}`);
+      if (inputTextEl) inputTextEl.textContent = p.input;
+    }
+
+    function handlePadSubmit(event, playerIdx) {
+      if (event) event.preventDefault();
+      if (!gameState.isRunning || gameState.roundEnded) return;
+      const p = players[playerIdx];
+      if (p.submitted) return;
+      if (p.input === '') {
+        const statusEl = document.getElementById(`statusText_${playerIdx}`);
+        if (statusEl) {
+          statusEl.textContent = '⚠️ 請先輸入數字再提交';
+          statusEl.className = 'mt-1.5 text-center text-[11px] sm:text-xs font-bold text-amber-600 truncate';
+        }
+        return;
+      }
+
+      p.submitted = true;
+      p.totalAnswered += 1;
+
+      const userAns = parseInt(p.input, 10);
+      const correctAns = gameState.currentQuestion.a;
+      const submitBtn = document.getElementById(`submitBtn_${playerIdx}`);
+      const inputBox = document.getElementById(`inputBox_${playerIdx}`);
+      const statusEl = document.getElementById(`statusText_${playerIdx}`);
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-60', 'cursor-not-allowed');
+      }
+
+      if (userAns === correctAns) {
+        p.isCorrect = true;
+        p.correctCount += 1;
+        p.streak += 1;
+        p.energy += 1;
+
+        let stepsGained = 1; // Base step for correct answer
+        let notes = [];
+
+        // Check First Blood (首答獎勵)
+        const isFirstBlood = (gameState.firstBloodPlayerId === null);
+        if (isFirstBlood) {
+          gameState.firstBloodPlayerId = playerIdx;
+          stepsGained += 1;
+          notes.push('首答獎勵 +1步');
+
+          // Show First Blood Banner on Question Board
+          const fbBanner = document.getElementById('firstBloodBanner');
+          const fbText = document.getElementById('firstBloodText');
+          fbText.textContent = `${p.name} 獲得首答獎勵 +1步`;
+          fbBanner.classList.remove('hidden');
+        }
+
+        // Check 3-Energy Full Charge Bonus (蓄滿3格再加2步)
+        if (p.energy >= 3) {
+          stepsGained += 2;
+          p.energy = 0;
+          notes.push('蓄滿3格 +2步');
+        }
+
+        // Check 3-Consecutive Streak Bonus (每連續答對3題再加1步)
+        if (p.streak > 0 && p.streak % 3 === 0) {
+          stepsGained += 1;
+          notes.push(`連對${p.streak}題 +1步`);
+        }
+
+        p.steps = Math.min(config.raceDistance, p.steps + stepsGained);
+
+        playCorrectSound(isFirstBlood);
+        updatePlayerEnergyDots(playerIdx);
+        updateRaceTrackPositions();
+
+        if (inputBox) {
+          inputBox.className = 'w-full h-11 sm:h-12 rounded-2xl border-2 border-[#22c55e] bg-[#f0fdf4] flex items-center justify-center num-font text-2xl sm:text-3xl font-black text-[#15803d] mb-2';
+        }
+
+        const bonusDesc = notes.length > 0 ? ` · ${notes.join(' · ')}` : '';
+        if (statusEl) {
+          statusEl.textContent = `答對，前進${stepsGained}步${bonusDesc}`;
+          statusEl.className = 'mt-1.5 text-center text-[11px] sm:text-xs font-extrabold text-emerald-700 truncate';
+        }
+
+        // Check immediate victory
+        if (p.steps >= config.raceDistance) {
+          finishMatch(playerIdx);
+          return;
+        }
+      } else {
+        // Wrong Answer
+        p.isCorrect = false;
+        p.streak = 0;
+        playWrongSound();
+
+        if (inputBox) {
+          inputBox.className = 'w-full h-11 sm:h-12 rounded-2xl border-2 border-rose-400 bg-rose-50 flex items-center justify-center num-font text-2xl sm:text-3xl font-black text-rose-600 mb-2';
+        }
+        if (statusEl) {
+          statusEl.textContent = '答錯，本題不前進';
+          statusEl.className = 'mt-1.5 text-center text-[11px] sm:text-xs font-bold text-rose-600 truncate';
+        }
+      }
+
+      // Check if all active players have submitted
+      const allSubmitted = players.slice(0, config.playerCount).every(pl => pl.submitted);
+      if (allSubmitted) {
+        concludeRound();
+      }
+    }
+
+    function loadNextQuestion() {
+      if (!gameState.isRunning) return;
+      clearInterval(gameState.timerId);
+      clearTimeout(gameState.roundTransitionId);
+
+      gameState.questionIndex += 1;
+      gameState.currentQuestion = generateQuestion();
+      gameState.timeLeft = config.questionTime;
+      gameState.firstBloodPlayerId = null;
+      gameState.roundEnded = false;
+
+      // Update Question Board UI
+      document.getElementById('questionIndexLabel').textContent = `第 ${gameState.questionIndex} 題`;
+      document.getElementById('equationDisplay').textContent = `${gameState.currentQuestion.q} = ?`;
+      document.getElementById('questionSubPrompt').textContent = '輸入答案，點擊確定提交';
+      document.getElementById('firstBloodBanner').classList.add('hidden');
+      updateTimerUI();
+
+      // Reset Player Keypads for new round
+      for (let i = 0; i < config.playerCount; i++) {
+        players[i].input = '';
+        players[i].submitted = false;
+        players[i].isCorrect = false;
+
+        const inputTextEl = document.getElementById(`inputText_${i}`);
+        const inputBox = document.getElementById(`inputBox_${i}`);
+        const submitBtn = document.getElementById(`submitBtn_${i}`);
+        const statusEl = document.getElementById(`statusText_${i}`);
+
+        if (inputTextEl) inputTextEl.textContent = '';
+        if (inputBox) {
+          inputBox.className = 'w-full h-11 sm:h-12 rounded-2xl border-2 border-slate-200 bg-slate-50/70 flex items-center justify-center num-font text-2xl sm:text-3xl font-black text-slate-800 mb-2 transition-colors';
+        }
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+        }
+        if (statusEl) {
+          statusEl.textContent = '輸入答案後提交';
+          statusEl.className = 'mt-1.5 text-center text-[11px] sm:text-xs font-bold text-slate-500 truncate';
+        }
+        updatePlayerEnergyDots(i);
+      }
+
+      // Start 1-second countdown
+      gameState.timerId = setInterval(() => {
+        gameState.timeLeft -= 1;
+        updateTimerUI();
+        if (gameState.timeLeft <= 3 && gameState.timeLeft > 0) {
+          playTone(440, 0.06, 'sine', 0.06);
+        }
+        if (gameState.timeLeft <= 0) {
+          concludeRound();
+        }
+      }, 1000);
+    }
+
+    function updateTimerUI() {
+      const badge = document.getElementById('timerBadge');
+      badge.textContent = `${Math.max(0, gameState.timeLeft)}秒`;
+      if (gameState.timeLeft <= 3) {
+        badge.className = 'px-4 py-1 rounded-full bg-rose-100 border border-rose-300 text-rose-600 font-black text-lg sm:text-xl num-font shadow-sm timer-urgent';
+      } else {
+        badge.className = 'px-4 py-1 rounded-full bg-[#fff7ed] border border-[#fed7aa] text-[#ea580c] font-black text-lg sm:text-xl num-font shadow-sm';
+      }
+    }
+
+    function concludeRound() {
+      if (gameState.roundEnded) return;
+      gameState.roundEnded = true;
+      clearInterval(gameState.timerId);
+
+      // Reveal correct answer on Question Board
+      const q = gameState.currentQuestion;
+      document.getElementById('equationDisplay').innerHTML = `${q.q} = <span class="text-emerald-600">${q.a}</span>`;
+      document.getElementById('questionSubPrompt').textContent = `本題正確答案：${q.a}（即將進入下一題...）`;
+
+      // Mark unsubmitted players as timeout
+      for (let i = 0; i < config.playerCount; i++) {
+        const p = players[i];
+        if (!p.submitted) {
+          p.streak = 0;
+          const statusEl = document.getElementById(`statusText_${i}`);
+          const submitBtn = document.getElementById(`submitBtn_${i}`);
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-60', 'cursor-not-allowed');
+          }
+          if (statusEl) {
+            statusEl.textContent = `⏰ 超時未提交，本題不前進`;
+            statusEl.className = 'mt-1.5 text-center text-[11px] sm:text-xs font-bold text-slate-400 truncate';
+          }
+        }
+      }
+
+      gameState.roundTransitionId = setTimeout(() => {
+        if (gameState.isRunning) {
+          loadNextQuestion();
+        }
+      }, 1700);
+    }
+
+    function skipToNextQuestion() {
+      if (!gameState.isRunning) return;
+      playKeySound();
+      loadNextQuestion();
+    }
+
+    /********************************************************************
+     * 6. VICTORY PODIUM & NAVIGATION
+     ********************************************************************/
+    function finishMatch(winnerIdx) {
+      gameState.isRunning = false;
+      gameState.roundEnded = true;
+      clearInterval(gameState.timerId);
+      clearTimeout(gameState.roundTransitionId);
+
+      playVictoryFanfare();
+
+      // Launch Confetti
+      if (typeof confetti === 'function') {
+        confetti({ particleCount: 110, spread: 80, origin: { y: 0.6 } });
+      }
+
+      const activePlayers = players.slice(0, config.playerCount).slice().sort((a, b) => {
+        if (b.steps !== a.steps) return b.steps - a.steps;
+        return b.correctCount - a.correctCount;
+      });
+
+      const winner = activePlayers[0];
+      const winnerAnimal = ANIMALS[winner.avatarIdx];
+
+      document.getElementById('victoryHeadline').textContent = `🎉 ${winnerAnimal.emoji} ${winner.name} 成功奪得黃金大寶箱！`;
+      document.getElementById('victorySubline').textContent = `共進行 ${gameState.questionIndex} 題比拼 · 目標 ${config.raceDistance} 步達成`;
+
+      const podiumList = document.getElementById('podiumList');
+      podiumList.innerHTML = '';
+
+      const medals = ['🥇 冠軍', '🥈 亞軍', '🥉 季軍', '🎖️ 殿軍'];
+      activePlayers.forEach((p, rankIdx) => {
+        const anim = ANIMALS[p.avatarIdx];
+        const acc = p.totalAnswered > 0 ? Math.round((p.correctCount / p.totalAnswered) * 100) : 0;
+
+        const row = document.createElement('div');
+        row.className = `flex items-center justify-between px-4 py-3 rounded-2xl border ${
+          rankIdx === 0
+            ? 'bg-amber-50 border-amber-300 shadow-sm'
+            : 'bg-slate-50 border-slate-200'
+        }`;
+
+        row.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="font-black text-sm sm:text-base ${rankIdx === 0 ? 'text-amber-600' : 'text-slate-600'} w-16 text-left">
+              ${medals[rankIdx]}
+            </span>
+            <span class="text-3xl">${anim.emoji}</span>
+            <div class="text-left">
+              <div class="font-black text-slate-800 text-base">${p.name}</div>
+              <div class="text-xs text-slate-500 font-bold">答對 ${p.correctCount} 題 · 正確率 ${acc}%</div>
+            </div>
+          </div>
+          <div class="text-right">
+            <span class="num-font font-black text-lg sm:text-xl text-emerald-600">${p.steps} 步</span>
+          </div>
+        `;
+        podiumList.appendChild(row);
+      });
+
+      setTimeout(() => {
+        const modal = document.getElementById('victoryModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }, 650);
+    }
+
+    function restartSameMatch() {
+      startMatch();
+    }
+
+    function exitMatch() {
+      gameState.isRunning = false;
+      clearInterval(gameState.timerId);
+      clearTimeout(gameState.roundTransitionId);
+
+      document.getElementById('victoryModal').classList.add('hidden');
+      document.getElementById('victoryModal').classList.remove('flex');
+      document.getElementById('gameScreen').classList.add('hidden');
+      document.getElementById('setupScreen').classList.remove('hidden');
+      renderPlayerSetupCards();
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    function showToast(msg) {
+      const box = document.getElementById('toastBox');
+      box.textContent = msg;
+      box.classList.remove('hidden');
+      setTimeout(() => {
+        box.classList.add('hidden');
+      }, 2600);
+    }
+
+    // Initialize on load
+    window.onload = function() {
+      initSetupScreen();
+    };
+  </script>
+</body>
+</html>
